@@ -7,13 +7,13 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title 学籍链证书管理合约
- * @notice 管理院校注册与学生证书的签发、撤销与验证。
+ * @notice 管理院校注册与学生证书的签发。
  * @dev 仅存储证书必要信息与文档哈希，详细数据建议放链下（如 IPFS）。
  */
 contract AcademicLedger is AccessControl, Pausable {
     using Strings for uint256;
 
-    // 角色：院校可签发与撤销证书
+    // 角色：院校可签发证书
     bytes32 public constant INSTITUTION_ROLE = keccak256("INSTITUTION_ROLE");
 
     // 证书结构
@@ -36,15 +36,21 @@ contract AcademicLedger is AccessControl, Pausable {
         string uri;
         // 文档哈希（如 PDF/JSON 的 keccak256 或其他算法结果）
         bytes32 docHash;
-        // 是否被撤销
-        bool revoked;
     }
 
     // 院校元数据
     struct Institution {
         string name;
         string metadataURI; // 可选：院校资料（备案号、认证文件等）
+    }
+
+    // 学生元数据
+    struct Student {
+        string name;
+        string studentId; // 学号
+        string metadataURI; // 可选：学生资料
         bool active;
+        uint256 registeredAt; // 注册时间戳
     }
 
     // 证书存储
@@ -57,17 +63,20 @@ contract AcademicLedger is AccessControl, Pausable {
 
     // 院校注册表
     mapping(address => Institution) public institutions;
+    
+    // 学生注册表
+    mapping(address => Student) public students;
 
     // 事件
     event InstitutionRegistered(address indexed institution, string name, string metadataURI);
-    event InstitutionStatusChanged(address indexed institution, bool active);
+    event StudentRegistered(address indexed student, string name, string studentId);
+    event StudentStatusChanged(address indexed student, bool active);
     event CertificateIssued(
         uint256 indexed id,
         address indexed student,
         address indexed institution,
         bytes32 docHash
     );
-    event CertificateRevoked(uint256 indexed id, address indexed institution, string reason);
     event CertificateUriUpdated(uint256 indexed id, string newUri);
 
     constructor() {
@@ -87,21 +96,46 @@ contract AcademicLedger is AccessControl, Pausable {
         string calldata metadataURI
     ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         require(institutionAddr != address(0), "Invalid address");
-        institutions[institutionAddr] = Institution({name: name, metadataURI: metadataURI, active: true});
+        institutions[institutionAddr] = Institution({name: name, metadataURI: metadataURI});
         _grantRole(INSTITUTION_ROLE, institutionAddr);
         emit InstitutionRegistered(institutionAddr, name, metadataURI);
     }
 
+
     /**
-     * @notice 设置院校启用/停用（停用后不可再签发/撤销证书）。
+     * @notice 注册学生。
      */
-    function setInstitutionStatus(address institutionAddr, bool active)
+    function registerStudent(
+        address studentAddr,
+        string calldata name,
+        string calldata studentId,
+        string calldata metadataURI
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        require(studentAddr != address(0), "Invalid address");
+        require(bytes(name).length > 0, "Name required");
+        require(bytes(studentId).length > 0, "Student ID required");
+        
+        students[studentAddr] = Student({
+            name: name,
+            studentId: studentId,
+            metadataURI: metadataURI,
+            active: true,
+            registeredAt: block.timestamp
+        });
+        
+        emit StudentRegistered(studentAddr, name, studentId);
+    }
+
+    /**
+     * @notice 设置学生启用/停用。
+     */
+    function setStudentStatus(address studentAddr, bool active)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(institutions[institutionAddr].active != active, "No change");
-        institutions[institutionAddr].active = active;
-        emit InstitutionStatusChanged(institutionAddr, active);
+        require(students[studentAddr].active != active, "No change");
+        students[studentAddr].active = active;
+        emit StudentStatusChanged(studentAddr, active);
     }
 
     /**
@@ -139,7 +173,6 @@ contract AcademicLedger is AccessControl, Pausable {
         string calldata uri,
         bytes32 docHash
     ) external onlyRole(INSTITUTION_ROLE) whenNotPaused returns (uint256 id) {
-        require(institutions[_msgSender()].active, "Institution inactive");
         require(student != address(0), "Invalid student");
         require(docHash != bytes32(0), "Doc hash required");
 
@@ -153,8 +186,7 @@ contract AcademicLedger is AccessControl, Pausable {
             issuedAt: uint64(block.timestamp),
             expiresAt: expiresAt,
             uri: uri,
-            docHash: docHash,
-            revoked: false
+            docHash: docHash
         });
         _certs[id] = c;
         _byStudent[student].push(id);
@@ -163,68 +195,8 @@ contract AcademicLedger is AccessControl, Pausable {
         emit CertificateIssued(id, student, _msgSender(), docHash);
     }
 
-    /**
-     * @notice 批量签发证书（与单发参数同构）。
-     */
-    // function batchIssueCertificates(
-    //     address[] calldata students,
-    //     string[] calldata programs,
-    //     string[] calldata levels,
-    //     uint64[] calldata expires,
-    //     string[] calldata uris,
-    //     bytes32[] calldata docHashes
-    // ) external onlyRole(INSTITUTION_ROLE) whenNotPaused returns (uint256[] memory ids) {
-    //     require(institutions[_msgSender()].active, "Institution inactive");
-    //     uint256 len = students.length;
-    //     require(
-    //         len == programs.length &&
-    //         len == levels.length &&
-    //         len == expires.length &&
-    //         len == uris.length &&
-    //         len == docHashes.length,
-    //         "Length mismatch"
-    //     );
-    //     ids = new uint256[](len);
-    //     for (uint256 i = 0; i < len; i++) {
-    //         require(students[i] != address(0), "Invalid student");
-    //         require(docHashes[i] != bytes32(0), "Doc hash required");
-    //         uint256 id = _nextId++;
-    //         Certificate memory c = Certificate({
-    //             id: id,
-    //             student: students[i],
-    //             institution: _msgSender(),
-    //             program: programs[i],
-    //             level: levels[i],
-    //             issuedAt: uint64(block.timestamp),
-    //             expiresAt: expires[i],
-    //             uri: uris[i],
-    //             docHash: docHashes[i],
-    //             revoked: false
-    //         });
-    //         _certs[id] = c;
-    //         _byStudent[students[i]].push(id);
-    //         _byInstitution[_msgSender()].push(id);
-    //         ids[i] = id;
+ 
 
-    //         emit CertificateIssued(id, students[i], _msgSender(), docHashes[i]);
-    //     }
-    // }
-
-    /**
-     * @notice 撤销证书（仅签发院校）。
-     */
-    function revokeCertificate(uint256 id, string calldata reason)
-        external
-        onlyRole(INSTITUTION_ROLE)
-        whenNotPaused
-    {
-        Certificate storage c = _certs[id];
-        require(c.id == id, "Not found");
-        require(c.institution == _msgSender(), "Not issuer");
-        require(!c.revoked, "Already revoked");
-        c.revoked = true;
-        emit CertificateRevoked(id, _msgSender(), reason);
-    }
 
     /**
      * @notice 更新证书的链下 URI（仅签发院校）。
@@ -242,7 +214,7 @@ contract AcademicLedger is AccessControl, Pausable {
     }
 
     // ---------------------------
-    // 查询与验证
+    // 查询
     // ---------------------------
 
     /**
@@ -269,15 +241,28 @@ contract AcademicLedger is AccessControl, Pausable {
     }
 
     /**
-     * @notice 验证证书是否有效（未撤销、未过期、院校仍有效）。
-     * @dev 可在前端同时核对链下文档哈希与机构数据。
+     * @notice 获取学生详细信息
      */
-    function verifyValidity(uint256 id) external view returns (bool valid, string memory reason) {
-        Certificate memory c = _certs[id];
-        if (c.id != id) return (false, "Not found");
-        if (!institutions[c.institution].active) return (false, "Institution inactive");
-        if (c.revoked) return (false, "Revoked");
-        if (c.expiresAt != 0 && block.timestamp > c.expiresAt) return (false, "Expired");
-        return (true, "");
+    function getStudent(address studentAddr) external view returns (
+        string memory name,
+        string memory studentId,
+        string memory metadataURI,
+        bool active,
+        uint256 registeredAt
+    ) {
+        Student memory s = students[studentAddr];
+        return (s.name, s.studentId, s.metadataURI, s.active, s.registeredAt);
     }
+
+    /**
+     * @notice 获取院校详细信息
+     */
+    function getInstitution(address institutionAddr) external view returns (
+        string memory name,
+        string memory metadataURI
+    ) {
+        Institution memory inst = institutions[institutionAddr];
+        return (inst.name, inst.metadataURI);
+    }
+
 }
