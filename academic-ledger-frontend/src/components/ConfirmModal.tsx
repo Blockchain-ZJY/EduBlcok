@@ -168,7 +168,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     console.log('🔧 原始文本前100字符:', text.substring(0, 100));
     
     // 【第一步】处理IPFS图片标记 [IPFS_IMAGE:uri]
-    html = html.replace(/\[IPFS_IMAGE:(.*?)\]/g, (match, uri) => {
+    html = html.replace(/\[IPFS_IMAGE:(.*?)\]/g, (_match, uri) => {
       console.log('🖼️ 发现图片标记:', uri);
       // 转换IPFS URI为HTTP URL
       let httpUrl = '';

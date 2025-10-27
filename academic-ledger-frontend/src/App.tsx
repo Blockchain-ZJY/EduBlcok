@@ -1,4 +1,3 @@
-import React from 'react';
 import ContractInterface from './components/ContractInterface';
 import './App.css';
 
