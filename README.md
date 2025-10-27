@@ -1,6 +1,19 @@
 # EduBlock - 区块链学历证书管理系统
 
-# 项目地址  https://edublock-web-4vej.vercel.app/
+<div align="center">
+
+![EduBlock Logo](https://img.shields.io/badge/EduBlock-Blockchain-blue)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.19-363636?logo=solidity)](https://soliditylang.org/)
+[![Foundry](https://img.shields.io/badge/Built%20with-Foundry-FFDB1C.svg)](https://getfoundry.sh/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://reactjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+基于区块链的去中心化学历证书管理系统
+
+[功能特性](#-功能特性) • [快速开始](#-快速开始) • [技术栈](#-技术栈) • [部署](#-部署) • [演示](#-演示)
+
+</div>
+
 ---
 
 ## 📖 项目简介
@@ -27,7 +40,6 @@ EduBlock 是一个基于区块链技术的去中心化学历证书管理系统�
 - 📎 **IPFS 存储**: 证书文件上传至 IPFS，实现去中心化存储
 - 🔍 **证书查询**: 支持多维度查询（学生、院校）
 - 🖼️ **证书预览**: 直接在界面查看 IPFS 上的证书图片
-- 🔄 **证书更新**: 院校可以更新证书的 URI 信息
 
 ### 技术特性
 
@@ -219,7 +231,7 @@ npm run build
 
 - **网络名称**: Polkadot Asset Hub Testnet
 - **RPC URL**: `https://testnet-passet-hub-eth-rpc.polkadot.io`
-- **链 ID**: `0x190f1b46`
+- **链 ID**: `1284`
 - **货币符号**: `PAS`
 - **区块浏览器**: `https://polkadot-asset-hub-testnet.subscan.io/`
 
@@ -234,7 +246,7 @@ npm run build
    - 由管理员注册
    - 可以注册学生
    - 可以颁发证书
-
+   - 可以更新证书 URI
 
 3. **学生 (Student)**
    - 由院校注册
@@ -367,12 +379,82 @@ vercel --prod
 - ✅ 错误处理
 - ✅ HTTPS 部署
 
+---
 
+## 📊 Gas 优化
 
+- 使用 `uint64` 存储时间戳
+- 合理使用 `memory` 和 `storage`
+- 批量操作优化
+- 事件替代存储
 
+---
 
+## 🤝 贡献
 
+欢迎贡献！请遵循以下步骤：
 
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
+### 代码规范
 
+- Solidity: 遵循 [Solidity Style Guide](https://docs.soliditylang.org/en/latest/style-guide.html)
+- TypeScript: 使用 ESLint 配置
+- 提交信息: 遵循 [Conventional Commits](https://www.conventionalcommits.org/)
 
+---
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+---
+
+## 👥 作者
+
+- **开发者**: lilinming
+- **GitHub**: [@lilinming](https://github.com/lilinming)
+- **项目地址**: https://github.com/lilinming/edublock
+
+---
+
+## 🙏 致谢
+
+- [OpenZeppelin](https://openzeppelin.com/) - 安全合约库
+- [Foundry](https://getfoundry.sh/) - 开发工具链
+- [Pinata](https://pinata.cloud/) - IPFS 服务
+- [Polkadot](https://polkadot.network/) - 区块链基础设施
+- [Vercel](https://vercel.com/) - 前端托管
+
+---
+
+## 📞 联系方式
+
+如有问题或建议，欢迎：
+
+- 提交 Issue
+- 发起 Discussion
+- 联系开发者
+
+---
+
+## 🔗 相关链接
+
+- [项目文档](./academic-ledger-frontend/README.md)
+- [智能合约](./src/AcademicLedger.sol)
+- [部署指南](./DEPLOY_GUIDE.md)
+- [测试文档](./test/AcademicLedger.t.sol)
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对你有帮助，请给一个 Star！⭐**
+
+Made with ❤️ by lilinming
+
+</div>
