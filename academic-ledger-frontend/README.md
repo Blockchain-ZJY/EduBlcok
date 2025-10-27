@@ -47,7 +47,7 @@ npm run build
 - **网络名称**: Polkadot Asset Hub Testnet
 - **RPC URL**: `https://testnet-passet-hub-eth-rpc.polkadot.io`
 - **链ID**: 1284
-- **货币符号**: DOT
+- **货币符号**: PAS
 - **区块浏览器**: `https://polkadot-asset-hub-testnet.subscan.io/`
 
 ## 使用说明

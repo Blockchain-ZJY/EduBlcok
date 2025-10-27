@@ -31,7 +31,7 @@ forge create --rpc-url $RPC_URL --private-key $PRIVATE_KEY src/AcademicLedger.so
    - **网络名称**: Polkadot Asset Hub Testnet
    - **RPC URL**: `https://testnet-passet-hub-eth-rpc.polkadot.io`
    - **链ID**: 1284
-   - **货币符号**: DOT
+   - **货币符号**: PAS
    - **区块浏览器**: `https://polkadot-asset-hub-testnet.subscan.io/`
 
 ### 获取测试币

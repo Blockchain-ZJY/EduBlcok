@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 // 合约地址 (需要部署到 Polkadot Asset Hub 测试网后更新)
-export const CONTRACT_ADDRESS = '0xD692405fE693791A4c8eEf420c7117bBE1550FA5';
+export const CONTRACT_ADDRESS = '0xBFAcb5ccf917F1F4839F86b7d0769a5475eBd634';
 
 // Polkadot Hub 测试网配置 (根据官方信息更新)
 export const NETWORK_CONFIG = {
@@ -108,16 +108,21 @@ export class AcademicLedgerContract {
     return accounts[0];
   }
 
+  // 检查角色
+  async hasRole(role: string, account: string): Promise<boolean> {
+    return await this.contract.hasRole(role, account);
+  }
+
   // 注册院校
-  async registerInstitution(institution: string, name: string, metadata: string): Promise<void> {
+  async registerInstitution(institution: string, name: string, metadata: string): Promise<any> {
     const tx = await this.contract.registerInstitution(institution, name, metadata);
-    await tx.wait();
+    return tx;
   }
 
   // 注册学生
-  async registerStudent(studentAddr: string, name: string, studentId: string, metadataURI: string): Promise<void> {
+  async registerStudent(studentAddr: string, name: string, studentId: string, metadataURI: string): Promise<any> {
     const tx = await this.contract.registerStudent(studentAddr, name, studentId, metadataURI);
-    await tx.wait();
+    return tx;
   }
 
   // 设置学生状态
@@ -134,42 +139,17 @@ export class AcademicLedgerContract {
     expiresAt: number,
     uri: string,
     docHash: string
-  ): Promise<number> {
+  ): Promise<any> {
     const tx = await this.contract.issueCertificate(
       student,
       program,
       level,
       expiresAt,
       uri,
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes(docHash))
+      docHash
     );
     
-    // 等待交易确认并获取证书ID
-    const receipt = await tx.wait();
-    
-    // 从收据中解析事件日志获取证书ID
-    const log = receipt.logs.find((log: any) => {
-      try {
-        const parsedLog = this.contract.interface.parseLog(log);
-        return parsedLog && parsedLog.name === 'CertificateIssued';
-      } catch (e) {
-        return false;
-      }
-    });
-    
-    if (log) {
-      try {
-        const parsedLog = this.contract.interface.parseLog(log);
-        return parsedLog.args.id.toNumber();
-      } catch (e) {
-        console.error('解析事件失败:', e);
-      }
-    }
-    
-    // 如果无法从事件获取，尝试从返回值获取
-    // 注意：某些情况下可能需要直接从交易中获取返回值
-    console.warn('未能从事件中获取证书ID，将返回0');
-    return 0;
+    return tx;
   }
 
 
